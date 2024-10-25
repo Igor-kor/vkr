@@ -2,6 +2,7 @@
 import FileUpload from "@/components/FileUpload.vue";
 import Tabs from "@/components/Tabs.vue";
 import Cardiogramm from "@/components/cardiogramm.vue";
+import Opencv from "@/components/opencv.vue";
 </script>
 
 <template>
@@ -21,6 +22,9 @@ import Cardiogramm from "@/components/cardiogramm.vue";
           </div>
         </header>
         <FileUpload></FileUpload>
+      </template>
+      <template #Tab3>
+        <Opencv></Opencv>
       </template>
     </Tabs>
   </main>

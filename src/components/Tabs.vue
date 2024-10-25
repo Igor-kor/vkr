@@ -16,7 +16,7 @@ export default {
   data() {
     return {
       selectedTab: 'Tab1',
-      tabs: ['Tab1', 'Tab2']
+      tabs: ['Tab1', 'Tab2', 'Tab3']
     };
   }
 };
