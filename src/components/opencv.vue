@@ -13,10 +13,10 @@
       <h3>После удаления сетки</h3>
       <canvas id="cleanCanvas"></canvas>
     </div>
-    <div>
-      <h3>Детектор краев Canny</h3>
-      <canvas id="edgesCanvas"></canvas>
-    </div>
+<!--    <div>-->
+<!--      <h3>Детектор краев Canny</h3>-->
+<!--      <canvas id="edgesCanvas"></canvas>-->
+<!--    </div>-->
     <div>
       <h3>Обнаруженный контур</h3>
       <canvas id="contourCanvas"></canvas>
@@ -154,16 +154,16 @@ export default {
         showImage(clean, 'cleanCanvas');
 
         // Использование детектора краев Canny
-        let edges = new cv.Mat();
-        cv.Canny(clean, edges, 50, 150);
-
-        // Показать изображение с краями
-        showImage(edges, 'edgesCanvas');
+        // let edges = new cv.Mat();
+        // cv.Canny(clean, edges, 50, 150);
+        //
+        // // Показать изображение с краями
+        // showImage(edges, 'edgesCanvas');
 
         // Обнаружение контуров
         let contours = new cv.MatVector();
         let hierarchy = new cv.Mat();
-        cv.findContours(edges, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_NONE);
+        cv.findContours(clean, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_NONE);
 
         // Фильтрация контуров по длине или площади
         let maxContour = null;
@@ -185,8 +185,10 @@ export default {
           // Отображение выбранного контура на изображении
           let contourImg = cv.Mat.zeros(src.rows, src.cols, cv.CV_8UC3);
           let contoursColor = new cv.Scalar(0, 255, 0);
-          cv.drawContours(contourImg, new cv.MatVector([maxContour]), -1, contoursColor, 1);
-
+          //cv.drawContours(contourImg, new cv.MatVector([maxContour]), -1, contoursColor, 1);
+          let contoursToDraw = new cv.MatVector();
+          contoursToDraw.push_back(maxContour);
+          cv.drawContours(contourImg, contoursToDraw, -1, contoursColor, 1);
           // Показать изображение с контуром
           showImage(contourImg, 'contourCanvas');
 
@@ -232,7 +234,7 @@ export default {
         temp2.delete();
         grid.delete();
         clean.delete();
-        edges.delete();
+        // edges.delete();
         contours.delete();
         hierarchy.delete();
         horizontalKernel.delete();
