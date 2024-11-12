@@ -65,9 +65,9 @@
     <v-stage
         v-if="imageSrc"
         :config="stageConfig"
-        @contentMousedown="startDrawing"
-        @contentMousemove="drawing"
-        @contentMouseup="finishDrawing"
+        @mousedown="startDrawing"
+        @mousemove="drawing"
+        @mouseup="finishDrawing"
     >
       <v-layer>
         <!-- Базовые линии -->
@@ -100,7 +100,7 @@
               :key="line.id"
               :points="line.points"
               :stroke="line.color"
-              :strokeWidth="2"
+              strokeWidth="2"
           />
 
           <!-- Отображение текущей линии во время рисования -->
@@ -159,6 +159,7 @@
         </v-group>
       </v-layer>
     </v-stage>
+    {{this.lines}}
   </div>
 </template>
 
@@ -170,30 +171,27 @@
 export default {
   data() {
     return {
-      imageSrc: null, // Путь к изображению
-      image: new window.Image(), // Картинка для Konva
-      currentTask: null, // Текущий выбранный интервал
-      isDrawing: false, // Состояние рисования
-      lines: [], // Линии для интервалов
-      measurements: {}, // Значения интервалов
-      stageConfig: {
-        width: window.innerWidth, // Ширина холста
-        height: window.innerHeight, // Высота холста
-      },
-      currentPoints: [], // Текущие точки для рисования линий или прямоугольников
-      fixedY: null, // Фиксированная Y-координата для линий
-      baseLines: [100, 200, 300, 400, 500], // Массив с Y-координатами базовых линий
-      offsetY: 0, // Текущее смещение по оси Y
-      rotation: 0, // Угол поворота изображения
-      scaleX: 1, // Масштаб по оси X
-      scaleY: 1, // Масштаб по оси Y
-      currentMousePosition: { x: 0, y: 0 }, // Текущее положение мыши относительно группы
-      mode: 'calibration', // Режим работы: 'calibration', 'measurement' или 'cropping'
-      calibrationRect: null, // Параметры калибровочного квадрата
-      cropRect: null, // Параметры прямоугольника обрезки
-      tapeSpeed: 25, // Скорость ленты в мм/с
-      pixelPerMM: null, // Пикселей в миллиметре по оси X (после калибровки)
-      voltagePerPixel: null, // Милливольт на пиксель по оси Y (после калибровки)
+      imageSrc: null,
+      image: new window.Image(),
+      currentTask: null,
+      isDrawing: false,
+      lines: [],
+      measurements: {},
+      stageConfig: { width: window.innerWidth, height: window.innerHeight },
+      currentPoints: [],
+      fixedY: null,
+      baseLines: [100, 200, 300, 400, 500],
+      offsetY: 0,
+      rotation: 0,
+      scaleX: 1,
+      scaleY: 1,
+      currentMousePosition: { x: 0, y: 0 },
+      mode: 'calibration',
+      calibrationRect: null,
+      cropRect: null,
+      tapeSpeed: 25,
+      pixelPerMM: null,
+      voltagePerPixel: null,
     };
   },
   methods: {
@@ -215,10 +213,7 @@ export default {
     },
     setMode(mode) {
       this.mode = mode;
-      this.currentTask = null;
-      this.isDrawing = false;
-      this.currentPoints = [];
-      this.currentMousePosition = { x: 0, y: 0 };
+      this.resetDrawingState();
     },
     selectInterval(interval) {
       if (this.mode === 'measurement') {
@@ -227,161 +222,77 @@ export default {
       }
     },
     startDrawing(event) {
+      if (!this.imageSrc) return;
+
       const pos = this.getRelativePointerPosition();
-      if (this.mode === 'calibration' || this.mode === 'cropping' || (this.isDrawing && this.currentTask)) {
-        this.currentPoints = [pos.x, pos.y]; // Начальная точка
-        this.currentMousePosition = pos; // Инициализируем текущее положение мыши
-        if (this.mode === 'measurement') {
-          this.fixedY = pos.y; // Фиксируем Y-координату для измерения интервалов
-        }
+      if (['calibration', 'cropping'].includes(this.mode) || (this.isDrawing && this.currentTask)) {
+        this.currentPoints = [pos.x, pos.y];
+        this.currentMousePosition = pos;
+        if (this.mode === 'measurement') this.fixedY = pos.y;
         this.isDrawing = true;
       }
     },
     drawing(event) {
-      if (this.isDrawing) {
-        const pos = this.getRelativePointerPosition();
-        this.currentMousePosition = pos; // Обновляем текущее положение мыши
-      }
+      if (this.isDrawing) this.currentMousePosition = this.getRelativePointerPosition();
     },
     finishDrawing(event) {
-      if (this.isDrawing) {
-        const pos = this.getRelativePointerPosition();
-        if (this.mode === 'calibration') {
-          // Сохраняем параметры калибровочного квадрата
-          const x = this.currentPoints[0];
-          const y = this.currentPoints[1];
-          const width = pos.x - x;
-          const height = pos.y - y;
-          this.calibrationRect = { x, y, width, height };
+      if (!this.isDrawing) return;
+
+      const pos = this.getRelativePointerPosition();
+      switch (this.mode) {
+        case 'calibration':
+          this.calibrationRect = { x: this.currentPoints[0], y: this.currentPoints[1], width: pos.x - this.currentPoints[0], height: pos.y - this.currentPoints[1] };
           this.calculateScaleFactors();
-        } else if (this.mode === 'cropping') {
-          // Сохраняем параметры прямоугольника обрезки
-          const x = this.currentPoints[0];
-          const y = this.currentPoints[1];
-          const width = pos.x - x;
-          const height = pos.y - y;
-          this.cropRect = { x, y, width, height };
+          break;
+        case 'cropping':
+          this.cropRect = { x: this.currentPoints[0], y: this.currentPoints[1], width: pos.x - this.currentPoints[0], height: pos.y - this.currentPoints[1] };
           this.performCropping();
-        } else if (this.mode === 'measurement' && this.currentTask) {
-          // Добавляем линию измерения
-          this.currentPoints.push(pos.x, this.fixedY);
-          this.addLine(this.currentPoints, this.currentTask);
-        }
+          break;
+        case 'measurement':
+          if (this.currentTask) {
+            this.currentPoints.push(pos.x, this.fixedY);
+            this.addLine(this.currentPoints, this.currentTask);
+          }
+          break;
       }
-      this.isDrawing = false;
-      this.currentTask = null;
-      this.currentPoints = [];
-      this.fixedY = null;
-      this.currentMousePosition = { x: 0, y: 0 };
+      this.resetDrawingState();
     },
     addLine(points, task) {
-      this.lines.push({
-        id: this.lines.length + 1,
-        points,
-        color: 'red',
-        task,
-      });
-      const length = this.calculateLength(points);
-      this.measurements[task] = length;
-    },
-    removeInterval(task) {
-      const index = this.lines.findIndex((line) => line.task === task);
-      if (index !== -1) {
-        this.lines.splice(index, 1);
-        delete this.measurements[task];
-      }
+      this.lines.push({ id: this.lines.length + 1, points, color: 'red', task });
+      this.measurements[task] = this.calculateLength(points);
     },
     calculateLength(points) {
       if (!this.pixelPerMM) {
         alert('Пожалуйста, выполните калибровку перед измерениями.');
         return 0;
       }
-      const [x1, , x2] = points;
-      const pixelDistance = Math.abs(x2 - x1);
-
-      // Учитываем масштабирование по оси X
-      const scaledPixelDistance = pixelDistance * this.scaleX;
-
-      const distanceInMM = scaledPixelDistance / this.pixelPerMM; // мм
-      const time = (distanceInMM / this.tapeSpeed) * 1000; // в мс
-      return time.toFixed(2);
+      const pixelDistance = Math.abs(points[2] - points[0]) * this.scaleX;
+      return ((pixelDistance / this.pixelPerMM) / this.tapeSpeed * 1000).toFixed(2);
     },
     calculateScaleFactors() {
       if (!this.calibrationRect) return;
-
-      // Предположим, что стандартный калибровочный квадрат соответствует 1 мВ по Y и 5 мм по X (200 мс при 25 мм/с это 5 мм)
-      const knownTimeMM = this.tapeSpeed * 0.2; // 200 мс в мм, например, при 25 мм/с это 5 мм
-      const knownVoltage = 1; // 1 мВ
-
-      // Вычисляем количество пикселей в миллиметре по оси X
-      const rectWidth = Math.abs(this.calibrationRect.width);
-      const rectHeight = Math.abs(this.calibrationRect.height);
-
-      this.pixelPerMM = rectWidth / knownTimeMM; // пикселей в мм по оси X
-      this.voltagePerPixel = rectHeight / knownVoltage; // пикселей в мВ по оси Y
+      const knownTimeMM = this.tapeSpeed * 0.2;
+      this.pixelPerMM = Math.abs(this.calibrationRect.width) / knownTimeMM;
+      this.voltagePerPixel = Math.abs(this.calibrationRect.height);
     },
     performCropping() {
       if (!this.cropRect) return;
-
-      // Создаем временный канвас для обрезки
       const cropCanvas = document.createElement('canvas');
       const ctx = cropCanvas.getContext('2d');
 
-      // Размеры обрезки
-      const cropX = this.cropRect.x;
-      const cropY = this.cropRect.y;
-      const cropWidth = this.cropRect.width;
-      const cropHeight = this.cropRect.height;
+      cropCanvas.width = Math.abs(this.cropRect.width);
+      cropCanvas.height = Math.abs(this.cropRect.height);
 
-      // Учитываем масштабирование и поворот группы
-      const node = this.$refs.imageGroup.getNode();
-      const groupScaleX = node.scaleX();
-      const groupScaleY = node.scaleY();
-      const rotation = node.rotation();
-
-      // Размеры исходного изображения
-      const imgWidth = this.image.width;
-      const imgHeight = this.image.height;
-
-      // Устанавливаем размеры временного канваса
-      cropCanvas.width = Math.abs(cropWidth);
-      cropCanvas.height = Math.abs(cropHeight);
-
-      // Сохраняем контекст и применяем трансформации
-      ctx.save();
-
-      // Применяем трансформации для корректного отображения обрезки
-      ctx.translate(-cropX, -cropY);
-      ctx.scale(groupScaleX, groupScaleY);
-      ctx.rotate((rotation * Math.PI) / 180);
-
-      // Рисуем исходное изображение на канвасе
-      ctx.drawImage(this.image, 0, 0);
-
-      // Восстанавливаем контекст
-      ctx.restore();
-
-      // Создаем новое изображение из канваса
+      ctx.drawImage(this.image, -this.cropRect.x, -this.cropRect.y);
       const croppedImageSrc = cropCanvas.toDataURL();
 
-      // Создаем новое изображение и заменяем текущее
       const croppedImage = new window.Image();
       croppedImage.onload = () => {
         this.image = croppedImage;
         this.imageSrc = croppedImageSrc;
         this.stageConfig.width = croppedImage.width;
         this.stageConfig.height = croppedImage.height;
-
-        // Сбрасываем трансформации и данные
-        this.alignImage();
-        this.cropRect = null;
-        this.calibrationRect = null;
-        this.scaleX = 1;
-        this.scaleY = 1;
-        this.pixelPerMM = null;
-        this.voltagePerPixel = null;
-        this.lines = [];
-        this.measurements = {};
+        this.resetTransformations();
       };
       croppedImage.src = croppedImageSrc;
     },
@@ -390,13 +301,6 @@ export default {
       this.offsetY = 0;
       this.scaleX = 1;
       this.scaleY = 1;
-      if (this.$refs.imageGroup) {
-        const node = this.$refs.imageGroup.getNode();
-        node.rotation(0);
-        node.y(this.stageConfig.height / 2);
-        node.scaleX(1);
-        node.scaleY(1);
-      }
     },
     getRelativePointerPosition() {
       const node = this.$refs.imageGroup.getNode();
@@ -404,9 +308,28 @@ export default {
       const pos = node.getStage().getPointerPosition();
       return transform.point(pos);
     },
+    resetDrawingState() {
+      this.isDrawing = false;
+      this.currentTask = null;
+      this.currentPoints = [];
+      this.fixedY = null;
+      this.currentMousePosition = { x: 0, y: 0 };
+    },
+    resetTransformations() {
+      this.alignImage();
+      this.cropRect = null;
+      this.calibrationRect = null;
+      this.scaleX = 1;
+      this.scaleY = 1;
+      this.pixelPerMM = null;
+      this.voltagePerPixel = null;
+      this.lines = [];
+      this.measurements = {};
+    }
   },
 };
 </script>
+
 
 
 
