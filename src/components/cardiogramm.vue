@@ -255,6 +255,7 @@ export default {
       tapeSpeed: 25,   // Скорость ленты в мм/с
       pixelPerMM: null,
       voltagePerPixel: null,
+      cropRect: null,
     };
   },
   computed: {
