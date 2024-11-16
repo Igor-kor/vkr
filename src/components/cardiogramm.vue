@@ -37,12 +37,12 @@
       <button @click="selectInterval('ST')">Сегмент ST</button>
 
       <!-- Кнопки для измерения вершин -->
-      <button @click="selectInterval('P')">Вершина P</button>
-      <button @click="selectInterval('Q')">Вершина Q</button>
-      <button @click="selectInterval('R')">Вершина R</button>
-      <button @click="selectInterval('S')">Вершина S</button>
-      <button @click="selectInterval('T')">Вершина T</button>
-      <button @click="selectInterval('U')">Вершина U</button>
+      <button @click="selectVertex('P')">Вершина P</button>
+      <button @click="selectVertex('Q')">Вершина Q</button>
+      <button @click="selectVertex('R')">Вершина R</button>
+      <button @click="selectVertex('S')">Вершина S</button>
+      <button @click="selectVertex('T')">Вершина T</button>
+      <button @click="selectVertex('U')">Вершина U</button>
 
       <!-- Значения интервалов и вершин -->
       <div class="values">
@@ -57,7 +57,7 @@
     <div class="alignment-controls">
       <label>
         Смещение по Y:
-        <input type="range" v-model="offsetY" min="-100" max="100" />
+        <input type="number" v-model="offsetY" min="-500" max="500" />
         {{ offsetY }}
       </label>
       <label>
@@ -77,6 +77,7 @@
       </label>
       <button @click="alignImage">Сбросить трансформации</button>
     </div>
+    <input type="checkbox" v-model="showLabels"> Отображение меток
 
     <!-- Конвас для разметки -->
     <v-stage
@@ -87,15 +88,9 @@
         @mouseup="finishDrawing"
     >
       <v-layer>
-        <!-- Базовые линии -->
-        <v-line
-            v-for="(lineY, index) in baseLines"
-            :key="index"
-            :points="[0, lineY, stageConfig.width, lineY]"
-            stroke="blue"
-            strokeWidth="1"
-            :dash="[10,5]"
-        />
+
+
+
 
         <!-- Группа, содержащая изображение и измерительные линии -->
         <v-group
@@ -111,72 +106,121 @@
           <!-- Отображение изображения -->
           <v-image :image="image" :x="0" :y="0" :listening="false" />
 
-          <!-- Линии для интервалов -->
-          <v-line
-              v-for="line in lines"
-              :key="line.id"
-              :points="line.points"
-              :stroke="line.color"
-              strokeWidth="2"
-          />
-
-          <!-- Отображение текущей линии во время рисования -->
-          <v-line
-              v-if="isDrawing && currentPoints.length === 2 && mode === 'measurement'"
-              :points="[currentPoints[0], currentPoints[1], currentMousePosition.x, currentPoints[1]]"
-              stroke="green"
-              strokeWidth="2"
-          />
-
-          <!-- Отображение калибровочного квадрата -->
-          <v-rect
-              v-if="calibrationRect"
-              :x="calibrationRect.x"
-              :y="calibrationRect.y"
-              :width="calibrationRect.width"
-              :height="calibrationRect.height"
-              stroke="red"
-              strokeWidth="2"
-          />
-
-          <!-- Отображение текущего квадрата во время калибровки -->
-          <v-rect
-              v-if="isDrawing && currentPoints.length === 2 && mode === 'calibration'"
-              :x="currentPoints[0]"
-              :y="currentPoints[1]"
-              :width="currentMousePosition.x - currentPoints[0]"
-              :height="currentMousePosition.y - currentPoints[1]"
-              stroke="green"
-              strokeWidth="2"
-          />
-
-          <!-- Отображение прямоугольника обрезки -->
-          <v-rect
-              v-if="cropRect"
-              :x="cropRect.x"
-              :y="cropRect.y"
-              :width="cropRect.width"
-              :height="cropRect.height"
-              stroke="orange"
-              strokeWidth="2"
-              :dash="[10, 5]"
-          />
-
-          <!-- Отображение текущего прямоугольника во время обрезки -->
-          <v-rect
-              v-if="isDrawing && currentPoints.length === 2 && mode === 'cropping'"
-              :x="currentPoints[0]"
-              :y="currentPoints[1]"
-              :width="currentMousePosition.x - currentPoints[0]"
-              :height="currentMousePosition.y - currentPoints[1]"
-              stroke="green"
-              strokeWidth="2"
-              :dash="[10, 5]"
-          />
         </v-group>
+        <!-- Линии для интервалов -->
+        <v-line
+            v-for="line in lines"
+            :key="line.id"
+            :points="line.points"
+            :stroke="line.color"
+            strokeWidth="2"
+        />
+        <v-text
+            v-if="showLabels"
+            v-for="line in lines"
+            :key="'text-' + line.id"
+            :x="line.points[0]"
+            :y="line.points[1] - 10"
+            :text="line.label + ': ' + line.value + ' мc'"
+            fontSize="12"
+            fill="black"
+        />
+
+        <!-- Точки для вершин -->
+        <v-circle
+            v-for="vertex in vertices"
+            :key="vertex.id"
+            :x="vertex.x"
+            :y="vertex.y"
+            :radius="4"
+            :fill="vertex.color"
+        />
+        <v-text
+            v-if="showLabels"
+            v-for="vertex in vertices"
+            :key="'text-' + vertex.id"
+            :x="vertex.x + 5"
+            :y="vertex.y - 10"
+            :text="vertex.label + ': ' + vertex.value + ' мВ'"
+            fontSize="12"
+            fill="black"
+        />
+
+        <!-- Отображение текущей линии во время рисования -->
+        <v-line
+            v-if="isDrawing && currentPoints.length === 2 && mode === 'measurement'"
+            :points="[currentPoints[0], currentPoints[1], currentMousePosition.x, currentPoints[1]]"
+            stroke="green"
+            strokeWidth="2"
+        />
+
+        <!-- Отображение калибровочного квадрата -->
+        <v-rect
+            v-if="calibrationRect"
+            :x="calibrationRect.x"
+            :y="calibrationRect.y"
+            :width="calibrationRect.width"
+            :height="calibrationRect.height"
+            stroke="red"
+            strokeWidth="2"
+        />
+
+        <!-- Отображение текущего квадрата во время калибровки -->
+        <v-rect
+            v-if="isDrawing && currentPoints.length === 2 && mode === 'calibration'"
+            :x="currentPoints[0]"
+            :y="currentPoints[1]"
+            :width="currentMousePosition.x - currentPoints[0]"
+            :height="currentMousePosition.y - currentPoints[1]"
+            stroke="green"
+            strokeWidth="2"
+        />
+
+        <!-- Отображение прямоугольника обрезки -->
+        <v-rect
+            v-if="cropRect"
+            :x="cropRect.x"
+            :y="cropRect.y"
+            :width="cropRect.width"
+            :height="cropRect.height"
+            stroke="orange"
+            strokeWidth="2"
+            :dash="[10, 5]"
+        />
+
+        <!-- Отображение текущего прямоугольника во время обрезки -->
+        <v-rect
+            v-if="isDrawing && currentPoints.length === 2 && mode === 'cropping'"
+            :x="currentPoints[0]"
+            :y="currentPoints[1]"
+            :width="currentMousePosition.x - currentPoints[0]"
+            :height="currentMousePosition.y - currentPoints[1]"
+            stroke="green"
+            strokeWidth="2"
+            :dash="[10, 5]"
+        />
+
+        <!-- Отображение текущей вершины во время рисования -->
+        <v-circle
+            v-if="isDrawing && currentPoints.length === 2 && mode === 'measurement' && isVertexTask"
+            :x="currentMousePosition.x"
+            :y="currentMousePosition.y"
+            :radius="4"
+            fill="green"
+        />
+        <!-- Базовые линии -->
+        <v-line
+            v-for="(lineY, index) in [baseLines]"
+            :key="index"
+            :points="[0, lineY, stageConfig.width, lineY]"
+            stroke="blue"
+            strokeWidth="1"
+            :dash="[10, 5]"
+        />
       </v-layer>
     </v-stage>
     {{this.lines}}
+    {{this.voltagePerPixel / this.sensitivity}}
   </div>
   <img src="../assets/template.png" width="500px">
 </template>
@@ -194,15 +238,17 @@ export default {
       currentTask: null,
       isDrawing: false,
       lines: [],
+      vertices: [],
       measurements: {},
       stageConfig: { width: window.innerWidth, height: window.innerHeight },
       currentPoints: [],
-      fixedY: null,
-      baseLines: [100, 200, 300, 400, 500],
+      fixedY: 100,
+      baseLines: 100,
       offsetY: 0,
       rotation: 0,
       scaleX: 1,
       scaleY: 1,
+      showLabels: true,
       currentMousePosition: { x: 0, y: 0 },
       mode: 'calibration',
       sensitivity: 10, // Чувствительность в мм/мВ (по умолчанию 10 мм/мВ)
@@ -210,6 +256,11 @@ export default {
       pixelPerMM: null,
       voltagePerPixel: null,
     };
+  },
+  computed: {
+    isVertexTask() {
+      return ['P', 'Q', 'R', 'S', 'T', 'U'].includes(this.currentTask);
+    }
   },
   methods: {
     onFileChange(event) {
@@ -238,6 +289,12 @@ export default {
         this.isDrawing = true;
       }
     },
+    selectVertex(vertex) {
+      if (this.mode === 'measurement') {
+        this.currentTask = vertex;
+        this.isDrawing = true;
+      }
+    },
     startDrawing(event) {
       if (!this.imageSrc) return;
 
@@ -258,24 +315,38 @@ export default {
       const pos = this.getRelativePointerPosition();
       switch (this.mode) {
         case 'calibration':
-          this.calibrationRect = { x: this.currentPoints[0], y: this.currentPoints[1], width: pos.x - this.currentPoints[0], height: pos.y - this.currentPoints[1] };
+          this.calibrationRect = {
+            x: this.currentPoints[0],
+            y: this.currentPoints[1],
+            width: pos.x - this.currentPoints[0],
+            height: pos.y - this.currentPoints[1]
+          };
           this.calculateScaleFactors();
           break;
         case 'cropping':
-          this.cropRect = { x: this.currentPoints[0], y: this.currentPoints[1], width: pos.x - this.currentPoints[0], height: pos.y - this.currentPoints[1] };
+          this.cropRect = {
+            x: this.currentPoints[0],
+            y: this.currentPoints[1],
+            width: pos.x - this.currentPoints[0],
+            height: pos.y - this.currentPoints[1]
+          };
           this.performCropping();
           break;
         case 'measurement':
           if (this.currentTask) {
-            this.currentPoints.push(pos.x, this.fixedY);
-            this.addLine(this.currentPoints, this.currentTask);
+            if (this.isVertexTask) {
+              this.addVertex(pos, this.currentTask);
+            } else {
+              this.currentPoints.push(pos.x, pos.y);
+              this.addLine(this.currentPoints, this.currentTask);
+            }
           }
           break;
       }
       this.resetDrawingState();
     },
     addLine(points, task) {
-      this.lines.push({ id: this.lines.length + 1, points, color: 'red', task });
+      this.lines.push({id: this.lines.length + 1, points, color: 'red', task,label: task, value: this.calculateLength(points)});
       this.measurements[task] = this.calculateLength(points);
     },
     calculateLength(points) {
@@ -285,6 +356,27 @@ export default {
       }
       const pixelDistance = Math.abs(points[2] - points[0]) * this.scaleX;
       return ((pixelDistance / this.pixelPerMM) / this.tapeSpeed * 1000).toFixed(2);
+    },
+    addVertex(pos, task) {
+      if (!this.voltagePerPixel) {
+        alert('Пожалуйста, выполните калибровку перед измерениями.');
+        return;
+      }
+
+      // Вычисление напряжения относительно базовой линии
+      const baseLineY = this.baseLines;
+      const voltage = ((baseLineY - pos.y) * this.voltagePerPixel / this.sensitivity).toFixed(2);
+debugger;
+      this.vertices.push({
+        id: this.vertices.length + 1,
+        x: pos.x,
+        y: pos.y,
+        color: 'green',
+        label: task,
+        value: voltage,
+      });
+
+      this.measurements[task] = voltage;
     },
     calculateScaleFactors() {
       if (!this.calibrationRect) return;
@@ -330,7 +422,7 @@ export default {
       this.currentTask = null;
       this.currentPoints = [];
       this.fixedY = null;
-      this.currentMousePosition = { x: 0, y: 0 };
+      this.currentMousePosition = {x: 0, y: 0};
     },
     resetTransformations() {
       this.alignImage();
@@ -342,16 +434,15 @@ export default {
       this.voltagePerPixel = null;
       this.lines = [];
       this.measurements = {};
-    }
+    },
+    removeInterval(key) {
+      this.lines = this.lines.filter(line => line.task !== key);
+      this.vertices = this.vertices.filter(vertex => vertex.label !== key);
+      delete this.measurements[key];
+    },
   },
 };
 </script>
-
-
-
-
-
-
 
 <style scoped>
 .cardio-app {
@@ -380,6 +471,7 @@ button {
 
 .controls {
   display: flex;
+  flex-direction: row;
   button {
     width: 100px;
   }
@@ -389,4 +481,3 @@ canvas {
   border: 1px solid #ccc;
 }
 </style>
-

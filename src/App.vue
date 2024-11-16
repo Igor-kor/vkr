@@ -9,10 +9,10 @@ import Opencv from "@/components/opencv.vue";
 
   <main>
     <Tabs>
-      <template #Tab1>
+      <template #Кардиограммы>
         <cardiogramm></cardiogramm>
       </template>
-      <template #Tab2>
+      <template #Осцилограммы>
         <header>
           <div class="header">
             <h1>Просмотр файлов *.wav осцилографа</h1>

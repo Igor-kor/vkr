@@ -15,8 +15,8 @@
 export default {
   data() {
     return {
-      selectedTab: 'Tab1',
-      tabs: ['Tab1', 'Tab2', 'Tab3']
+      selectedTab: 'Кардиограммы',
+      tabs: ['Кардиограммы', 'Осцилограммы', 'Tab3']
     };
   }
 };
