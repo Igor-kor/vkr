@@ -15,10 +15,9 @@ import Opencv from "@/components/opencv.vue";
       <template #Tab2>
         <header>
           <div class="header">
-            <h1>Fnirsi *.wav viewer</h1>
-            <h2>For model FNIRSI1013D, FNIRSI1014D.</h2>
-            <h3>This app was developed by Igor Sharangiya.</h3>
-            <h3><a href="https://github.com/Igor-kor/Fnirsi-Wav-Viewer">https://github.com/Igor-kor/Fnirsi-Wav-Viewer</a></h3>
+            <h1>Просмотр файлов *.wav осцилографа</h1>
+            <h2>для моделей FNIRSI1013D, FNIRSI1014D.</h2>
+            <h3><a href="https://github.com/Igor-kor/vkr">https://github.com/Igor-kor/vkr</a></h3>
           </div>
         </header>
         <FileUpload></FileUpload>

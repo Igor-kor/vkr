@@ -1,5 +1,6 @@
 <template>
   <div class="cardio-app">
+    <h1>Вычисление значений кардиограмм</h1>
     <!-- Форма для загрузки файла -->
     <input type="file" @change="onFileChange" />
 
@@ -18,6 +19,14 @@
       </label>
     </div>
 
+    <!-- Ввод чувствительности (мм/мВ) -->
+    <div class="sensitivity-input">
+      <label>
+        Чувствительность (мм/мВ):
+        <input type="number" v-model.number="sensitivity" min="1" />
+      </label>
+    </div>
+
     <!-- Кнопки для задания интервалов (только в режиме измерения) -->
     <div class="controls" v-if="mode === 'measurement'">
       <button @click="selectInterval('PQ')">Интервал PQ</button>
@@ -27,10 +36,18 @@
       <button @click="selectInterval('QRS')">Сегмент QRS</button>
       <button @click="selectInterval('ST')">Сегмент ST</button>
 
-      <!-- Значения интервалов -->
+      <!-- Кнопки для измерения вершин -->
+      <button @click="selectInterval('P')">Вершина P</button>
+      <button @click="selectInterval('Q')">Вершина Q</button>
+      <button @click="selectInterval('R')">Вершина R</button>
+      <button @click="selectInterval('S')">Вершина S</button>
+      <button @click="selectInterval('T')">Вершина T</button>
+      <button @click="selectInterval('U')">Вершина U</button>
+
+      <!-- Значения интервалов и вершин -->
       <div class="values">
         <div v-for="(value, key) in measurements" :key="key">
-          <p>{{ key }}: {{ value }} ms</p>
+          <p>{{ key }}: {{ value }} {{ key.includes('Вершина') ? 'мВ' : 'мс' }}</p>
           <button @click="removeInterval(key)">Удалить {{ key }}</button>
         </div>
       </div>
@@ -161,6 +178,7 @@
     </v-stage>
     {{this.lines}}
   </div>
+  <img src="../assets/template.png" width="500px">
 </template>
 
 
@@ -187,9 +205,8 @@ export default {
       scaleY: 1,
       currentMousePosition: { x: 0, y: 0 },
       mode: 'calibration',
-      calibrationRect: null,
-      cropRect: null,
-      tapeSpeed: 25,
+      sensitivity: 10, // Чувствительность в мм/мВ (по умолчанию 10 мм/мВ)
+      tapeSpeed: 25,   // Скорость ленты в мм/с
       pixelPerMM: null,
       voltagePerPixel: null,
     };
@@ -359,6 +376,13 @@ export default {
 
 button {
   margin: 5px 0;
+}
+
+.controls {
+  display: flex;
+  button {
+    width: 100px;
+  }
 }
 
 canvas {
