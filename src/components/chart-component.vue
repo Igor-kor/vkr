@@ -66,8 +66,8 @@ export default {
           datasets:[
             {
               label: 'Channel 1',
-              borderColor: 'rgb(241,219,41)',
-              backgroundColor: 'rgb(157,127,33)',
+              borderColor: 'rgb(208,0,255)',
+              backgroundColor: 'rgb(124,63,136)',
               data: this.ParseData.CH1Data1,
               borderWidth: 1,
               pointStyle: 'line',
@@ -254,7 +254,7 @@ export default {
   grid-area: 2 / 1 / 13 / 14;
 }
 .right-column1 {
-  color: rgb(241,219,41);
+  color: rgb(208,0,255);
   grid-template-columns: repeat(1, 1fr);
   grid-template-rows: repeat(12, 1fr);
   display: grid;

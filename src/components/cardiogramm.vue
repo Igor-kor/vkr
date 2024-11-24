@@ -29,20 +29,20 @@
 
     <!-- Кнопки для задания интервалов (только в режиме измерения) -->
     <div class="controls" v-if="mode === 'measurement'">
-      <button @click="selectInterval('PQ')">Интервал PQ</button>
-      <button @click="selectInterval('PQSegment')">Сегмент PQ</button>
-      <button @click="selectInterval('RR')">Интервал RR</button>
-      <button @click="selectInterval('QT')">Интервал QT</button>
-      <button @click="selectInterval('QRS')">Сегмент QRS</button>
-      <button @click="selectInterval('ST')">Сегмент ST</button>
+      <v-btn @click="selectInterval('PQ')">Интервал PQ</v-btn>
+      <v-btn @click="selectInterval('PQSegment')">Сегмент PQ</v-btn>
+      <v-btn @click="selectInterval('RR')">Интервал RR</v-btn>
+      <v-btn @click="selectInterval('QT')">Интервал QT</v-btn>
+      <v-btn @click="selectInterval('QRS')">Сегмент QRS</v-btn>
+      <v-btn @click="selectInterval('ST')">Сегмент ST</v-btn>
 
       <!-- Кнопки для измерения вершин -->
-      <button @click="selectVertex('P')">Вершина P</button>
-      <button @click="selectVertex('Q')">Вершина Q</button>
-      <button @click="selectVertex('R')">Вершина R</button>
-      <button @click="selectVertex('S')">Вершина S</button>
-      <button @click="selectVertex('T')">Вершина T</button>
-      <button @click="selectVertex('U')">Вершина U</button>
+      <v-btn @click="selectVertex('P')">Вершина P</v-btn>
+      <v-btn @click="selectVertex('Q')">Вершина Q</v-btn>
+      <v-btn @click="selectVertex('R')">Вершина R</v-btn>
+      <v-btn @click="selectVertex('S')">Вершина S</v-btn>
+      <v-btn @click="selectVertex('T')">Вершина T</v-btn>
+      <v-btn @click="selectVertex('U')">Вершина U</v-btn>
 
       <!-- Значения интервалов и вершин -->
       <div class="values">
@@ -75,7 +75,7 @@
         <input type="range" v-model.number="scaleY" min="0.1" max="5" step="0.1" />
         {{ scaleY }}
       </label>
-      <button @click="alignImage">Сбросить трансформации</button>
+      <v-btn @click="alignImage">Сбросить трансформации</v-btn>
     </div>
     <input type="checkbox" v-model="showLabels"> Отображение меток
 

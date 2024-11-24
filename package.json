@@ -14,7 +14,8 @@
     "chartjs-plugin-zoom": "^2.0.1",
     "konva": "^9.3.16",
     "vue": "^3.4.21",
-    "vue-konva": "^3.1.2"
+    "vue-konva": "^3.1.2",
+    "vuetify": "^3.7.4"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.0.4",
